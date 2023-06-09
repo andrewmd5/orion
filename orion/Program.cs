@@ -15,15 +15,66 @@ Console.CancelKeyPress += (s, ev) =>
 };
 
 AnsiConsole.Write(new FigletText("orion").LeftJustified().Color(Color.Green));
+var config = Config.Load();
+if (config is null)
+{
+    if (!AnsiConsole.Confirm("No config file found. Would you like to create one now?"))
+    {
+        Environment.Exit(0);
+    }
+    var brewPath = AnsiConsole.Ask<string>("Enter the path to your x86-64 Homebrew binary:", defaultValue: ShellWrapper.DefaultBrewPath);
+    brewPath = brewPath.Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+    if (string.IsNullOrWhiteSpace(brewPath) || !File.Exists(brewPath))
+    {
+        AnsiConsole.MarkupLine("[red]Invalid Homebrew path.[/]");
+        Environment.Exit(1);
+    }
+    var winePrefix = AnsiConsole.Ask<string>("Enter the path to your Wine prefix:");
+    winePrefix = winePrefix.Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+    if (string.IsNullOrEmpty(winePrefix) || !Directory.Exists(winePrefix))
+    {
+        AnsiConsole.MarkupLine("[red]Invalid Wine prefix path.[/]");
+        Environment.Exit(1);
+    }
+    config = new Config
+    {
+        WinePrefix = winePrefix,
+        BrewPath = brewPath,
+        Apps = Array.Empty<App>().ToList()
+    };
+}
+
+
 try
-{   AnsiConsole.MarkupLine("[yellow]Checking for dependencies...[/]");
+{
+    ShellWrapper.BrewPath = config.BrewPath ?? throw new Exception("Brew path is not defined.");
+    AnsiConsole.MarkupLine("[yellow]Checking for dependencies...[/]");
     await ShellWrapper.EnsureMacOsSonoma(cancellationTokenSource.Token);
     await ShellWrapper.EnsureZshAvailabilityAsync(cancellationTokenSource.Token);
     await ShellWrapper.EnsureRosettaAvailabilityAsync(cancellationTokenSource.Token);
     ShellWrapper.EnsureBrewAvailability();
     await ShellWrapper.EnsureGamePortingToolkitAvailability(cancellationTokenSource.Token);
+    AnsiConsole.MarkupLine("[green]All dependencies are installed.[/]");
+    AnsiConsole.MarkupLine("[yellow]Checking for updates...[/]");
+    var latestVersion = await Utils.GetLatestReleaseAsync(cancellationTokenSource.Token);
+    if (latestVersion is null)
+    {
+        AnsiConsole.MarkupLine("[red]Unable to check for updates.[/]");
+    }
+    else
+    {
+        if (latestVersion > Utils.CurrentVersion)
+        {
+            AnsiConsole.MarkupLine($"[yellow]Version {latestVersion} is available for download at [u]{Utils.ReleaseUrl}[/][/]");
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[green]No updates are available.[/]");
+        }
+    }
 }
-catch (OperationCanceledException) {
+catch (OperationCanceledException)
+{
     Environment.Exit(0);
 }
 catch (Exception ex)
@@ -35,41 +86,12 @@ catch (Exception ex)
 
 try
 {
-    var config = Config.Load();
-    if (config is null)
-    {
-        if (!AnsiConsole.Confirm("No config file found. Would you like to create one now?"))
-        {
-            Environment.Exit(0);
-        }
-        var winePrefix = AnsiConsole.Ask<string>("Enter the path to your Wine prefix:");
-        winePrefix = winePrefix.Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-        if (string.IsNullOrEmpty(winePrefix) || !Directory.Exists(winePrefix))
-        {
-            Console.WriteLine(winePrefix);
-            AnsiConsole.MarkupLine("[red]Invalid Wine prefix path.[/]");
-            Environment.Exit(1);
-        }
-        config = new Config
-        {
-            WinePrefix = winePrefix,
-            Apps = Array.Empty<App>().ToList()
-        };
-        config.Save();
-    }
 
-    if (string.IsNullOrWhiteSpace(config.WinePrefix) || !Directory.Exists(config.WinePrefix))
-    {
-        AnsiConsole.MarkupLine("[red]Wine prefix path does not exist[/]");
-        Environment.Exit(1);
-    }
-
-    var steam = new Steam(config.WinePrefix);
+    var steam = new Steam(config.WinePrefix ?? throw new Exception("Wine prefix is not defined."));
     if (!steam.IsInstalled() && AnsiConsole.Confirm("Steam is not installed. Would you like to install it?"))
     {
         await steam.Install(cancellationTokenSource.Token);
     }
-
     // eventually we'll probably do something with the saved apps, but for now just get them
     config.Apps = steam.GetInstalledApps();
     config.Save();

@@ -8,8 +8,9 @@ public partial class ShellWrapper
 {
     private static readonly string _shellPath = "zsh";
     private static readonly string _architectureFlag = "-x86_64";
-    private static readonly string _brewPath = "/usr/local/bin/brew";
-    
+    public static readonly string DefaultBrewPath = "/usr/local/bin/brew";
+    public static string BrewPath { get; set; } = DefaultBrewPath;
+
     /// <summary>
     /// Launches a process under the game porting toolkit.
     /// </summary>
@@ -27,7 +28,7 @@ public partial class ShellWrapper
             StartInfo = new ProcessStartInfo
             {
                 FileName = "/bin/bash",
-               Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({_brewPath} shellenv)\\\"; {hudEnabled}{esyncEnabled} WINEPREFIX=\\\"{winePrefix}\\\" `brew --prefix game-porting-toolkit`/bin/wine64 \\\"{executablePath}\\\" {escapedArgs} 2>&1 | grep D3DM'\"",
+                Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; {hudEnabled}{esyncEnabled} WINEPREFIX=\\\"{winePrefix}\\\" `brew --prefix game-porting-toolkit`/bin/wine64 \\\"{executablePath}\\\" {escapedArgs} 2>&1 | grep D3DM'\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
@@ -131,7 +132,7 @@ public partial class ShellWrapper
     /// <exception cref="Exception">Thrown when Homebrew is not installed or unavailable.</exception>
     public static void EnsureBrewAvailability()
     {
-        if (!File.Exists(_brewPath))
+        if (!File.Exists(BrewPath))
         {
             throw new Exception("The x86_64 version of Homebrew is not installed on this system.");
         }
@@ -190,7 +191,7 @@ public partial class ShellWrapper
             StartInfo = new ProcessStartInfo
             {
                 FileName = "/bin/bash",
-                Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({_brewPath} shellenv)\\\"; brew list game-porting-toolkit'\"",
+                Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; brew list game-porting-toolkit'\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
