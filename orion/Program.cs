@@ -97,7 +97,7 @@ try
     isLaunching = true;
     Utils.KillWine();
     AnsiConsole.MarkupLine("Launching [green]{0}[/]...", app.Name);
-    AnsiConsole.MarkupLine("Press [red]Command+C[/] to exit.");
+    AnsiConsole.MarkupLine("Press [red]Control+C[/] to exit.");
     await ShellWrapper.ExecuteGamePortingToolkit(config.WinePrefix, app.ExecutablePath, app.Arguments, cancellationTokenSource.Token, enableHud, enableEsync);
     AnsiConsole.MarkupLine("[yellow]Cleaning up...[/]");
 }
