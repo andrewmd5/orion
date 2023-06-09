@@ -42,7 +42,7 @@ public class Steam
     public bool IsInstalled() => File.Exists(Path.Join(_winePrefix, "drive_c/Program Files (x86)/Steam/steam.exe"));
     public string GetExecutablePath() => "C:\\Program Files (x86)/Steam/steam.exe";
 
-    public async Task Install()
+    public async Task Install(CancellationToken cancellationToken)
     {
         using var client = new HttpClient();
         using var installer = File.Create("drive_c/SteamSetup.exe");
@@ -64,22 +64,17 @@ public class Steam
                        {
                            AutoStart = false
                        });
-                       await client.DownloadAsync("https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe", installer, task);
+                       await client.DownloadAsync("https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe", installer, task, cancellationToken);
                    });
                });
 
         await AnsiConsole.Status()
           .StartAsync("Installing [u]Steam[/]...", async ctx =>
           {
-              await ShellWrapper.ExecuteGamePortingToolkit(_winePrefix, "C:\\SteamSetup.exe", "/S");
+              await ShellWrapper.ExecuteGamePortingToolkit(_winePrefix, "C:\\SteamSetup.exe", "/S", cancellationToken);
           });
         // we need to kill Steam and then relaunch it
-        Process[] array = Process.GetProcessesByName("wine64-preloader");
-        for (int i = 0; i < array.Length; i++)
-        {
-            using Process? process = array[i];
-            process.Kill();
-        }
+        Utils.KillWine();
 
         AnsiConsole.MarkupLine("[green]Steam installed![/]");
     }

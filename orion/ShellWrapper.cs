@@ -21,7 +21,7 @@ public partial class ShellWrapper
     /// <param name="winePrefix">The wine prefix where the executable is located</param>
     /// <param name="executablePath">The fully qualified path to the executable</param>
     /// <param name="args">optional arguments to provide the executable</param>
-    public static async Task ExecuteGamePortingToolkit(string winePrefix, string executablePath, string args = "", bool enableHud = false, bool enableEsync = false)
+    public static async Task ExecuteGamePortingToolkit(string winePrefix, string executablePath, string args, CancellationToken cancellationToken, bool enableHud = false, bool enableEsync = false)
     {
         string hudEnabled = enableHud ? "MTL_HUD_ENABLED=1 " : "";
         string esyncEnabled = enableEsync ? "WINEESYNC=1 " : "";
@@ -62,7 +62,7 @@ public partial class ShellWrapper
         gptProcess.BeginOutputReadLine();
         gptProcess.BeginErrorReadLine();
 
-        await gptProcess.WaitForExitAsync();
+        await gptProcess.WaitForExitAsync(cancellationToken);
     }
 
     /// <summary>
@@ -108,7 +108,7 @@ public partial class ShellWrapper
     /// Ensures that zsh is installed and available.
     /// </summary>
     /// <exception cref="Exception">Thrown when zsh is not installed or unavailable.</exception>
-    public static async Task EnsureZshAvailabilityAsync()
+    public static async Task EnsureZshAvailabilityAsync(CancellationToken cancellationToken)
     {
         using var zshShell = new Process()
         {
@@ -122,8 +122,8 @@ public partial class ShellWrapper
             }
         };
         zshShell.Start();
-        var result = await zshShell.StandardOutput.ReadToEndAsync();
-        await zshShell.WaitForExitAsync();
+        var result = await zshShell.StandardOutput.ReadToEndAsync(cancellationToken);
+        await zshShell.WaitForExitAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(result))
         {
             throw new Exception($"zsh is not installed on this system.");
@@ -146,7 +146,7 @@ public partial class ShellWrapper
     /// Ensures that Rosetta 2 is installed and available.
     /// </summary>
     /// <exception cref="Exception">Thrown when Rosetta 2 is not installed or unavailable.</exception>
-    public static async Task EnsureRosettaAvailabilityAsync()
+    public static async Task EnsureRosettaAvailabilityAsync(CancellationToken cancellationToken)
     {
         using var machProcess = new Process()
         {
@@ -160,8 +160,8 @@ public partial class ShellWrapper
             }
         };
         machProcess.Start();
-        var result = await machProcess.StandardOutput.ReadToEndAsync();
-        await machProcess.WaitForExitAsync();
+        var result = await machProcess.StandardOutput.ReadToEndAsync(cancellationToken);
+        await machProcess.WaitForExitAsync(cancellationToken);
         if (!result.Contains("Apple")) throw new Exception("Intel Based Macs are Ineligible for Rosetta 2.");
         using var rosettaProcess = new Process()
         {
@@ -176,8 +176,8 @@ public partial class ShellWrapper
             }
         };
         rosettaProcess.Start();
-        var error = await rosettaProcess.StandardOutput.ReadToEndAsync();
-        await rosettaProcess.WaitForExitAsync();
+        var error = await rosettaProcess.StandardOutput.ReadToEndAsync(cancellationToken);
+        await rosettaProcess.WaitForExitAsync(cancellationToken);
         if (!string.IsNullOrWhiteSpace(error))
         {
             throw new Exception("Rosetta 2 is not installed.");
@@ -188,7 +188,7 @@ public partial class ShellWrapper
     /// Ensures that Game Porting Toolkit is installed and available.
     /// </summary>
     /// <exception cref="Exception">Thrown when Game Porting Toolkit is not installed or unavailable.</exception>
-    public static async Task EnsureGamePortingToolkitAvailability()
+    public static async Task EnsureGamePortingToolkitAvailability(CancellationToken cancellationToken)
     {
         var gptProcess = new Process()
         {
@@ -203,9 +203,9 @@ public partial class ShellWrapper
             }
         };
         gptProcess.Start();
-        string output = await gptProcess.StandardOutput.ReadToEndAsync();
-        string error = await gptProcess.StandardError.ReadToEndAsync();
-        await gptProcess.WaitForExitAsync();
+        string output = await gptProcess.StandardOutput.ReadToEndAsync(cancellationToken);
+        string error = await gptProcess.StandardError.ReadToEndAsync(cancellationToken);
+        await gptProcess.WaitForExitAsync(cancellationToken);
         if (!output.Contains("function_grep.pl") || error.Contains("Error: No available formula with the name \"game-porting-toolkit\"."))
         {
             throw new Exception("gameportingtoolkit is not functioning correctly. Ensure that brew is in the environment.");

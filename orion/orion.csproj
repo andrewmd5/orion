@@ -6,7 +6,8 @@
     <RootNamespace>Ptk</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-      <PublishAot>true</PublishAot>
+    <PublishAot>true</PublishAot>
+    <VersionPrefix>0.0.2</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
