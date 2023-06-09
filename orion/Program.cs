@@ -16,7 +16,7 @@ Console.CancelKeyPress += (s, ev) =>
 
 AnsiConsole.Write(new FigletText("orion").LeftJustified().Color(Color.Green));
 try
-{   
+{   AnsiConsole.MarkupLine("[yellow]Checking for dependencies...[/]");
     await ShellWrapper.EnsureMacOsSonoma(cancellationTokenSource.Token);
     await ShellWrapper.EnsureZshAvailabilityAsync(cancellationTokenSource.Token);
     await ShellWrapper.EnsureRosettaAvailabilityAsync(cancellationTokenSource.Token);
