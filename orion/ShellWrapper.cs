@@ -9,12 +9,7 @@ public partial class ShellWrapper
     private static readonly string _shellPath = "zsh";
     private static readonly string _architectureFlag = "-x86_64";
     private static readonly string _brewPath = "/usr/local/bin/brew";
-
-    public string ExecuteCommand(string command)
-    {
-        return string.Empty;
-    }
-
+    
     /// <summary>
     /// Launches a process under the game porting toolkit.
     /// </summary>
@@ -70,7 +65,7 @@ public partial class ShellWrapper
     /// </summary>
     /// <returns></returns>
     /// <exception cref="Exception">Thrown when the current system is not running macOS 14.0 or later.</exception>
-    public static async Task EnsureMacOsSonoma()
+    public static async Task EnsureMacOsSonoma(CancellationToken cancellationToken)
     {
         using var swVersProcess = new Process()
         {
@@ -84,8 +79,8 @@ public partial class ShellWrapper
             }
         };
         swVersProcess.Start();
-        var result = await swVersProcess.StandardOutput.ReadToEndAsync();
-        await swVersProcess.WaitForExitAsync();
+        var result = await swVersProcess.StandardOutput.ReadToEndAsync(cancellationToken);
+        await swVersProcess.WaitForExitAsync(cancellationToken);
 
         if (string.IsNullOrWhiteSpace(result))
         {

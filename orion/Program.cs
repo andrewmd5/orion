@@ -16,7 +16,8 @@ Console.CancelKeyPress += (s, ev) =>
 
 AnsiConsole.Write(new FigletText("orion").LeftJustified().Color(Color.Green));
 try
-{
+{   
+    await ShellWrapper.EnsureMacOsSonoma(cancellationTokenSource.Token);
     await ShellWrapper.EnsureZshAvailabilityAsync(cancellationTokenSource.Token);
     await ShellWrapper.EnsureRosettaAvailabilityAsync(cancellationTokenSource.Token);
     ShellWrapper.EnsureBrewAvailability();
