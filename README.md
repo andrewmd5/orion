@@ -18,4 +18,5 @@ a simple command line tool to launch games through the [Game Porting Toolkit](ht
 
 - [x] Launch games from the command line
 - [x] Steam game detection
+- [x] Battle.net game detection 
 - [x] Game Porting Toolkit detection
