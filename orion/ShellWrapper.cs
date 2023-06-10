@@ -24,7 +24,7 @@ public partial class ShellWrapper {
         using var gptProcess = new Process() {
             StartInfo = new ProcessStartInfo {
                 FileName = "/bin/bash",
-                Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; {hudEnabled}{esyncEnabled} WINEPREFIX=\\\"{winePrefix}\\\" `brew --prefix game-porting-toolkit`/bin/wine64 \\\"{executablePath}\\\" {escapedArgs} 2>&1 | grep D3DM'\"",
+                Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; {hudEnabled}{esyncEnabled} WINEPREFIX=\\\"{winePrefix}\\\" `{BrewPath} --prefix game-porting-toolkit`/bin/wine64 \\\"{executablePath}\\\" {escapedArgs} 2>&1 | grep D3DM'\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
@@ -164,7 +164,7 @@ public partial class ShellWrapper {
         var gptProcess = new Process() {
             StartInfo = new ProcessStartInfo {
                 FileName = "/bin/bash",
-                Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; brew list game-porting-toolkit'\"",
+                Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; {BrewPath} list game-porting-toolkit'\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
