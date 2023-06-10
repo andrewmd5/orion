@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="protobuf-net" Version="3.2.26" />
     <PackageReference Include="spectre.console" Version="0.47.0" />
   </ItemGroup>
 

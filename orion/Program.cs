@@ -1,43 +1,37 @@
 ﻿using Ptk;
 using Spectre.Console;
 
+
 var isLaunching = false;
 var cancellationTokenSource = new CancellationTokenSource();
 Console.TreatControlCAsInput = false;
-Console.CancelKeyPress += (s, ev) =>
-{
+Console.CancelKeyPress += (s, ev) => {
     cancellationTokenSource.Cancel();
     ev.Cancel = true;
-    if (!isLaunching)
-    {
+    if (!isLaunching) {
         Environment.Exit(0);
     }
 };
 
 AnsiConsole.Write(new FigletText("orion").LeftJustified().Color(Color.Green));
 var config = Config.Load();
-if (config is null)
-{
-    if (!AnsiConsole.Confirm("No config file found. Would you like to create one now?"))
-    {
+if (config is null) {
+    if (!AnsiConsole.Confirm("No config file found. Would you like to create one now?")) {
         Environment.Exit(0);
     }
     var brewPath = AnsiConsole.Ask<string>("Enter the path to your x86-64 Homebrew binary:", defaultValue: ShellWrapper.DefaultBrewPath);
     brewPath = brewPath.Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-    if (string.IsNullOrWhiteSpace(brewPath) || !File.Exists(brewPath))
-    {
+    if (string.IsNullOrWhiteSpace(brewPath) || !File.Exists(brewPath)) {
         AnsiConsole.MarkupLine("[red]Invalid Homebrew path.[/]");
         Environment.Exit(1);
     }
     var winePrefix = AnsiConsole.Ask<string>("Enter the path to your Wine prefix:");
     winePrefix = winePrefix.Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-    if (string.IsNullOrEmpty(winePrefix) || !Directory.Exists(winePrefix))
-    {
+    if (string.IsNullOrEmpty(winePrefix) || !Directory.Exists(winePrefix)) {
         AnsiConsole.MarkupLine("[red]Invalid Wine prefix path.[/]");
         Environment.Exit(1);
     }
-    config = new Config
-    {
+    config = new Config {
         WinePrefix = winePrefix,
         BrewPath = brewPath,
         Apps = Array.Empty<App>().ToList()
@@ -45,8 +39,7 @@ if (config is null)
 }
 
 
-try
-{
+try {
     ShellWrapper.BrewPath = config.BrewPath ?? throw new Exception("Brew path is not defined.");
     AnsiConsole.MarkupLine("[yellow]Checking for dependencies...[/]");
     await ShellWrapper.EnsureMacOsSonoma(cancellationTokenSource.Token);
@@ -57,52 +50,53 @@ try
     AnsiConsole.MarkupLine("[green]All dependencies are installed.[/]");
     AnsiConsole.MarkupLine("[yellow]Checking for updates...[/]");
     var latestVersion = await Utils.GetLatestReleaseAsync(cancellationTokenSource.Token);
-    if (latestVersion is null)
-    {
+    if (latestVersion is null) {
         AnsiConsole.MarkupLine("[red]Unable to check for updates.[/]");
-    }
-    else
-    {
-        if (latestVersion > Utils.CurrentVersion)
-        {
+    } else {
+        if (latestVersion > Utils.CurrentVersion) {
             AnsiConsole.MarkupLine($"[yellow]Version {latestVersion} is available for download at [u]{Utils.ReleaseUrl}[/][/]");
-        }
-        else
-        {
+        } else {
             AnsiConsole.MarkupLine("[green]No updates are available.[/]");
         }
     }
-}
-catch (OperationCanceledException)
-{
+} catch (OperationCanceledException) {
     Environment.Exit(0);
-}
-catch (Exception ex)
-{
+} catch (Exception ex) {
     AnsiConsole.MarkupLine("[red]An error occurred while checking for dependencies.[/]");
     AnsiConsole.WriteException(ex);
     Environment.Exit(1);
 }
 
-try
-{
+try {
 
     var steam = new Steam(config.WinePrefix ?? throw new Exception("Wine prefix is not defined."));
-    if (!steam.IsInstalled() && AnsiConsole.Confirm("Steam is not installed. Would you like to install it?"))
-    {
+    if (!steam.IsInstalled() && AnsiConsole.Confirm("Steam is not installed. Would you like to install it?")) {
         await steam.Install(cancellationTokenSource.Token);
     }
     // eventually we'll probably do something with the saved apps, but for now just get them
-    config.Apps = steam.GetInstalledApps();
+    config.Apps = new List<App>();
+    if (steam.IsInstalled()) config.Apps.AddRange(steam.GetInstalledApps());
+    var battleNet = new BattleNet(config.WinePrefix);
+    if (battleNet.IsInstalled()) config.Apps.AddRange(battleNet.GetInstalledApps());
     config.Save();
 
     //prepend steam (and other launchers) to the list of apps
-    config.Apps = config.Apps.Prepend(new App(
-        "Steam", string.Empty, steam.GetExecutablePath(),
-        "-nofriendsui",
-        string.Empty,
-        AppPlatform.Steam)
-    ).ToList();
+    if (steam.IsInstalled()) {
+        config.Apps = config.Apps.Prepend(new App(
+            "Steam", string.Empty, steam.ExecutablePath,
+            "-nofriendsui",
+            string.Empty,
+            AppPlatform.Steam)
+        ).ToList();
+    }
+    if (battleNet.IsInstalled()) {
+        config.Apps = config.Apps.Prepend(new App(
+            "Battle.net", string.Empty, battleNet.LauncherPath,
+            string.Empty,
+            string.Empty,
+            AppPlatform.BattleNet)
+        ).ToList();
+    }
 
     var enableHud = AnsiConsole.Confirm("Enable HUD?", defaultValue: true);
     var enableEsync = AnsiConsole.Confirm("Enable esync?", defaultValue: false);
@@ -110,9 +104,9 @@ try
     var app = AnsiConsole.Prompt(
             new SelectionPrompt<App>()
                 .Title("Select an app to launch")
-                .PageSize(10)
+                .PageSize(25)
                 .AddChoices(config.Apps)
-                .UseConverter((app) => app.Name));
+                .UseConverter((app) => $"{app.Name} ({app.Platform})"));
 
 
     AnsiConsole.MarkupLine("[yellow]Killing previous instances of Wine processes...[/]");
@@ -122,19 +116,13 @@ try
     AnsiConsole.MarkupLine("Press [red]Command+C[/] to exit.");
     await ShellWrapper.ExecuteGamePortingToolkit(config.WinePrefix, app.ExecutablePath, app.Arguments, cancellationTokenSource.Token, enableHud, enableEsync);
     AnsiConsole.MarkupLine("[yellow]Cleaning up...[/]");
-}
-catch (OperationCanceledException)
-{
+} catch (OperationCanceledException) {
     AnsiConsole.WriteLine("Exiting...");
-}
-catch (Exception ex)
-{
+} catch (Exception ex) {
     AnsiConsole.MarkupLine("[red]An error occurred[/]");
     AnsiConsole.WriteException(ex);
     Environment.Exit(1);
-}
-finally
-{
+} finally {
     Utils.KillWine();
     Environment.Exit(0);
 }

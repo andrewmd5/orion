@@ -1,0 +1,200 @@
+[
+  {
+    "Code": "agent",
+    "Name": null,
+    "Manifest": {
+      "LaunchExecutable": "Agent.exe",
+      "LaunchCommand": "",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": null
+    }
+  },
+  {
+    "Code": "anbs",
+    "Name": "Diablo Immortal",
+    "Manifest": {
+      "LaunchExecutable": "Engine/Binaries/Win64/DiabloImmortal.exe",
+      "LaunchCommand": "--dx11 --sound-api=wwise --start=Python",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": null
+    }
+  },
+  {
+    "Code": "d3",
+    "Name": "Diablo III",
+    "Manifest": {
+      "LaunchExecutable": "x64/Diablo III64.exe",
+      "LaunchCommand": "-launch",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "D3"
+    }
+  },
+  {
+    "Code": "fenris",
+    "Name": "Diablo IV",
+    "Manifest": {
+      "LaunchExecutable": "Diablo IV.exe",
+      "LaunchCommand": "-sso -launch",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": null
+    }
+  },
+  {
+    "Code": "hero",
+    "Name": "Heroes of the Storm",
+    "Manifest": {
+      "LaunchExecutable": "Support64/HeroesSwitcher_x64.exe",
+      "LaunchCommand": "-launch",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "Hero"
+    }
+  },
+  {
+    "Code": "hsb",
+    "Name": "Hearthstone",
+    "Manifest": {
+      "LaunchExecutable": "Hearthstone.exe",
+      "LaunchCommand": "-launch",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "WTCG"
+    }
+  },
+  {
+    "Code": "lazr",
+    "Name": "Call of Duty Modern Warfare 2 Campaign Remastered",
+    "Manifest": {
+      "LaunchExecutable": "MW2CR.exe",
+      "LaunchCommand": "",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "LAZR"
+    }
+  },
+  {
+    "Code": "odin",
+    "Name": "Call of Duty Modern Warfare",
+    "Manifest": {
+      "LaunchExecutable": "bootstrapper.exe",
+      "LaunchCommand": "ModernWarfare.exe",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "ODIN"
+    }
+  },
+  {
+    "Code": "osi",
+    "Name": "Diablo II Resurrected",
+    "Manifest": {
+      "LaunchExecutable": "D2R.exe",
+      "LaunchCommand": "",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": null
+    }
+  },
+  {
+    "Code": "pro",
+    "Name": "Overwatch",
+    "Manifest": {
+      "LaunchExecutable": "Overwatch.exe",
+      "LaunchCommand": "",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "Pro"
+    }
+  },
+  {
+    "Code": "rtro",
+    "Name": "Blizzard Arcade Collection",
+    "Manifest": {
+      "LaunchExecutable": "client.exe",
+      "LaunchCommand": "",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": null
+    }
+  },
+  {
+    "Code": "s1",
+    "Name": "StarCraft",
+    "Manifest": {
+      "LaunchExecutable": "x86_64/StarCraft.exe",
+      "LaunchCommand": "-launch",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "S1"
+    }
+  },
+  {
+    "Code": "s2",
+    "Name": "StarCraft II",
+    "Manifest": {
+      "LaunchExecutable": "Support64/SC2Switcher_x64.exe",
+      "LaunchCommand": "-launch",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "S2"
+    }
+  },
+  {
+    "Code": "viper",
+    "Name": "Call of Duty Black Ops 4",
+    "Manifest": {
+      "LaunchExecutable": "BlackOps4_boot.exe",
+      "LaunchCommand": "",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "VIPR"
+    }
+  },
+  {
+    "Code": "w3",
+    "Name": "Warcraft III",
+    "Manifest": {
+      "LaunchExecutable": "x86_64/Warcraft III.exe",
+      "LaunchCommand": "-launch",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "W3"
+    }
+  },
+  {
+    "Code": "wlby",
+    "Name": "Crash Bandicoot 4",
+    "Manifest": {
+      "LaunchExecutable": "CrashBandicoot4.exe",
+      "LaunchCommand": "",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": null
+    }
+  },
+  {
+    "Code": "wow",
+    "Name": "World of Warcraft",
+    "Manifest": {
+      "LaunchExecutable": "WoW.exe",
+      "LaunchCommand": "",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": "WoW"
+    }
+  },
+  {
+    "Code": "wow_classic",
+    "Name": "Burning Crusade Classic",
+    "Manifest": {
+      "LaunchExecutable": "WoWClassic.exe",
+      "LaunchCommand": "",
+      "WorkingDirectory": null,
+      "RootDirectory": null,
+      "ApplicationUserModelId": null
+    }
+  }
+]
