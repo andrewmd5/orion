@@ -1,49 +1,40 @@
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Spectre.Console;
 
 namespace Ptk;
 
-public class Steam
-{
-    private readonly string _winePrefix;
+public class Steam : BaseLauncher {
 
-    public Steam(string winePrefix)
-    {
-        _winePrefix = winePrefix;
-    }
+    public override string Name => "Steam";
 
-    public List<App> GetInstalledApps()
-    {
+    public Steam(string winePrefix) : base(winePrefix) { }
+
+    public override List<App> GetInstalledApps() {
         var steamAppsDir = Path.Join(_winePrefix, "drive_c/Program Files (x86)/Steam/steamapps");
-        if (!Directory.Exists(steamAppsDir))
-        {
+        if (!Directory.Exists(steamAppsDir)) {
             return new List<App>();
         }
         var acfFiles = Directory.GetFiles(steamAppsDir, "*.acf");
         var apps = new List<App>();
-        for (var i = 0; i < acfFiles.Length; i++)
-        {
+        for (var i = 0; i < acfFiles.Length; i++) {
             var acfFile = acfFiles[i];
             var app = ACFParser.ParseACF(acfFile);
             // not installed
-            if (app.StateFlags is not "4")
-            {
+            if (app.StateFlags is not "4") {
                 continue;
             }
-            if (app is { AppId: not null, LauncherPath: not null, Name: not null, InstallDir: not null })
-            {
+            if (app is { AppId: not null, LauncherPath: not null, Name: not null, InstallDir: not null }) {
+                if (app.Name.Contains("Steamworks")) continue;
                 apps.Add(new(app.Name, app.InstallDir, app.LauncherPath, $"-nochatui -nofriendsui -silent -applaunch {app.AppId}", app.AppId, AppPlatform.Steam));
             }
         }
         return apps;
     }
 
-    public bool IsInstalled() => File.Exists(Path.Join(_winePrefix, "drive_c/Program Files (x86)/Steam/steam.exe"));
-    public string GetExecutablePath() => "C:\\Program Files (x86)/Steam/steam.exe";
+    public override bool IsInstalled() => File.Exists(Path.Join(_winePrefix, "drive_c/Program Files (x86)/Steam/steam.exe"));
+    public override string ExecutablePath => "C:\\Program Files (x86)/Steam/steam.exe";
 
-    public async Task Install(CancellationToken cancellationToken)
-    {
+    public override async Task Install(CancellationToken cancellationToken) {
         using var client = new HttpClient();
         using var installer = File.Create("drive_c/SteamSetup.exe");
         await AnsiConsole.Progress()
@@ -56,12 +47,9 @@ public class Steam
                     new SpinnerColumn(),
                })
                .HideCompleted(true)
-               .StartAsync(async context =>
-               {
-                   await Task.Run(async () =>
-                   {
-                       var task = context.AddTask($"Downloading [u]Steam[/]", new ProgressTaskSettings
-                       {
+               .StartAsync(async context => {
+                   await Task.Run(async () => {
+                       var task = context.AddTask($"Downloading [u]Steam[/]", new ProgressTaskSettings {
                            AutoStart = false
                        });
                        await client.DownloadAsync("https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe", installer, task, cancellationToken);
@@ -69,8 +57,7 @@ public class Steam
                });
 
         await AnsiConsole.Status()
-          .StartAsync("Installing [u]Steam[/]...", async ctx =>
-          {
+          .StartAsync("Installing [u]Steam[/]...", async ctx => {
               await ShellWrapper.ExecuteGamePortingToolkit(_winePrefix, "C:\\SteamSetup.exe", "/S", cancellationToken);
           });
         // we need to kill Steam and then relaunch it
@@ -79,9 +66,7 @@ public class Steam
         AnsiConsole.MarkupLine("[green]Steam installed![/]");
     }
 
-
-    class SteamApp
-    {
+    class SteamApp {
         public string? AppId { get; set; }
         public string? LauncherPath { get; set; }
         public string? Name { get; set; }
@@ -89,10 +74,8 @@ public class Steam
         public string? StateFlags { get; set; }
     }
 
-    class ACFParser
-    {
-        public static SteamApp ParseACF(string filePath)
-        {
+    class ACFParser {
+        public static SteamApp ParseACF(string filePath) {
             var result = new SteamApp();
             var content = File.ReadAllText(filePath);
             result.AppId = GetValue(content, "appid");
@@ -103,8 +86,7 @@ public class Steam
             return result;
         }
 
-        private static string? GetValue(string content, string key)
-        {
+        private static string? GetValue(string content, string key) {
             var regex = new Regex($"\"{key}\"\\s+\"(.*?)\"", RegexOptions.Compiled);
             var match = regex.Match(content);
             return match.Success ? match.Groups[1].Value : null;
