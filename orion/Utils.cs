@@ -6,7 +6,7 @@ namespace Ptk;
 public static class Utils {
     public const string ReleaseUrl = "https://github.com/AndrewMD5/orion/releases";
     public const string ReleaseApi = "https://api.github.com/repos/andrewmd5/orion/releases";
-    public static readonly Version CurrentVersion = new(0, 0, 3, 0);
+    public static readonly Version CurrentVersion = new(0, 0, 4, 0);
 
     public static void KillWine() {
         Process[] array = Process.GetProcesses();
