@@ -36,7 +36,7 @@ public class Steam : BaseLauncher {
 
     public override async Task Install(CancellationToken cancellationToken) {
         using var client = new HttpClient();
-        using var installer = File.Create("drive_c/SteamSetup.exe");
+        using var installer = File.Create(Path.Combine(_winePrefix, "drive_c/SteamSetup.exe"));
         await AnsiConsole.Progress()
                .Columns(new ProgressColumn[]
                {
