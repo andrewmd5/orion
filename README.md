@@ -7,6 +7,7 @@ a simple command line tool to launch games through the [Game Porting Toolkit](ht
 </div>
 
 # Installation
+- Install Rosetta `softwareupdate --install-rosetta`
 - Install the Apple [Game Porting Toolkit](https://www.applegamingwiki.com/wiki/Game_Porting_Toolkit)
 - Download the latest release from the [releases page](https://github.com/andrewmd5/orion/releases/)
 - Unzip the release and move the `orion` binary to `/usr/local/bin/` (or run the install script)
