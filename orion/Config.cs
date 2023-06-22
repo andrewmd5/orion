@@ -17,6 +17,9 @@ public class Config {
     [JsonPropertyName("brewPath")]
     public string? BrewPath { get; set; }
 
+    [JsonPropertyName("hasDependencies")]
+    public bool? HasDependencies { get; set; }
+
     public static readonly string FilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library/Preferences/orion/config.json");
 
     private static readonly JsonSerializerOptions Settings = new(JsonSerializerDefaults.General) {
