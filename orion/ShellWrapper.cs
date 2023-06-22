@@ -127,7 +127,7 @@ public partial class ShellWrapper {
     public static async Task EnsureRosettaAvailabilityAsync(CancellationToken cancellationToken) {
         using var machProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName =  _shellPath,
+                FileName = _shellPath,
                 Arguments = "-c \"sysctl -n machdep.cpu.brand_string\"",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
@@ -140,7 +140,7 @@ public partial class ShellWrapper {
         if (!result.Contains("Apple")) throw new Exception("Intel Based Macs are Ineligible for Rosetta 2.");
         using var rosettaProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName =  _shellPath,
+                FileName = _shellPath,
                 Arguments = $"-c \"arch {_architectureFlag} /usr/bin/true\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -163,7 +163,7 @@ public partial class ShellWrapper {
     public static async Task EnsureGamePortingToolkitAvailability(CancellationToken cancellationToken) {
         var gptProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName =  _shellPath,
+                FileName = _shellPath,
                 Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; {BrewPath} list game-porting-toolkit'\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -213,6 +213,34 @@ public partial class ShellWrapper {
         }
         Utils.KillWine();
     }
+
+    /// <summary>
+    /// Toggles the Retina mode for a given wine prefix.
+    /// </summary>
+    /// <param name="winePrefix">The wine prefix to toggle Retina mode for.</param>
+    /// <param name="enableRetinaMode">Whether to enable or disable Retina mode.</param>
+    /// <exception cref="Exception">Thrown when Retina mode cannot be toggled.</exception>
+    public static async Task ToggleRetinaMode(string winePrefix, bool enableRetinaMode, CancellationToken cancellationToken) {
+        var value = enableRetinaMode ? 'Y' : 'N';
+        var registryCommand = $"\\\"HKEY_CURRENT_USER\\\\Software\\\\Wine\\\\Mac Driver\\\" /v RetinaMode /t REG_SZ /d '{value}' /f";
+        using var regEdit = new Process() {
+            StartInfo = new ProcessStartInfo {
+                FileName = _shellPath,
+                Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; WINEPREFIX=\\\"{winePrefix}\\\" `{BrewPath} --prefix game-porting-toolkit`/bin/wine64 reg add {registryCommand}'",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            }
+        };
+        regEdit.Start();
+        var output = await regEdit.StandardOutput.ReadToEndAsync(cancellationToken);
+        await regEdit.WaitForExitAsync(cancellationToken);
+        if (!output.Contains("The operation completed successfully", StringComparison.OrdinalIgnoreCase)) {
+            throw new Exception($"Error Retina mode: {output}");
+        }
+    }
+
 
     [GeneratedRegex(@"ProductVersion:\s+(\d+\.\d+)")]
     private static partial Regex ProductRegex();

@@ -110,6 +110,11 @@ try {
 
     var enableHud = AnsiConsole.Confirm("Enable HUD?", defaultValue: true);
     var enableEsync = AnsiConsole.Confirm("Enable esync?", defaultValue: false);
+    var enableRetinaMode = AnsiConsole.Confirm("Enable Retina (high resolution) mode?", defaultValue: false);
+    if (enableRetinaMode) {
+        AnsiConsole.MarkupLine("[yellow]Enabling Retina mode. Please note, some games will not run with Retina mode enabled.[/]");
+    }
+    await ShellWrapper.ToggleRetinaMode(config.WinePrefix, enableRetinaMode, cancellationTokenSource.Token);
 
     var app = AnsiConsole.Prompt(
             new SelectionPrompt<App>()
