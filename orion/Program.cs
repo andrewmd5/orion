@@ -94,7 +94,7 @@ try {
     if (steam.IsInstalled()) {
         config.Apps = config.Apps.Prepend(new App(
             "Steam", string.Empty, steam.ExecutablePath,
-            "-nofriendsui",
+            "-nofriendsui -noverifyfiles -udpforce -allosarches",
             string.Empty,
             AppPlatform.Steam)
         ).ToList();
