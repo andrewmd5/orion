@@ -51,6 +51,8 @@ try {
         await ShellWrapper.EnsureRosettaAvailabilityAsync(cancellationTokenSource.Token);
         ShellWrapper.EnsureBrewAvailability();
         await ShellWrapper.EnsureGamePortingToolkitAvailability(cancellationTokenSource.Token);
+
+        await ShellWrapper.ChangeWinVersion(config.WinePrefix ?? throw new Exception("Wine prefix is not defined."), "19042", cancellationTokenSource.Token);
         AnsiConsole.MarkupLine("[green]All dependencies are installed.[/]");
         config.HasDependencies = true;
         // TODO maybe save on set for properties?

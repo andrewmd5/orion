@@ -182,6 +182,37 @@ public partial class ShellWrapper {
         }
     }
 
+    /// <summary>
+    /// Sets the Windows version for a given wine prefix.
+    /// </summary>
+    /// <param name="winePrefix">The wine prefix to set the Windows version for.</param>
+    /// <param name="windowsVersion">The Windows version to set.</param>
+    /// <exception cref="Exception">Thrown when the Windows version cannot be set.</exception>
+    public static async Task ChangeWinVersion(string winePrefix, string windowsVersion, CancellationToken cancellationToken) {
+        var commands = new string[] {
+            "\\\"HKEY_LOCAL_MACHINE\\\\Software\\\\Microsoft\\\\Windows NT\\\\CurrentVersion\\\" /v CurrentBuild /t REG_SZ /d 19042 /f",
+            "\\\"HKEY_LOCAL_MACHINE\\\\Software\\\\Microsoft\\\\Windows NT\\\\CurrentVersion\\\" /v CurrentBuildNumber /t REG_SZ /d 19042 /f"
+        };
+        foreach (var command in commands) {
+            using var regEdit = new Process() {
+                StartInfo = new ProcessStartInfo {
+                    FileName = _shellPath,
+                    Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; WINEPREFIX=\\\"{winePrefix}\\\" `{BrewPath} --prefix game-porting-toolkit`/bin/wine64 reg add {command}'",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                }
+            };
+            regEdit.Start();
+            var output = await regEdit.StandardOutput.ReadToEndAsync(cancellationToken);
+            await regEdit.WaitForExitAsync(cancellationToken);
+            if (!output.Contains("The operation completed successfully", StringComparison.OrdinalIgnoreCase)) {
+                throw new Exception($"Error changing Windows Version: {output}");
+            }
+        }
+        Utils.KillWine();
+    }
 
     [GeneratedRegex(@"ProductVersion:\s+(\d+\.\d+)")]
     private static partial Regex ProductRegex();
