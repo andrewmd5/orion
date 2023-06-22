@@ -13,6 +13,8 @@ Console.CancelKeyPress += (s, ev) => {
     }
 };
 
+var skipSonomaCheck = args.Where(a => a.Equals("--skip-sonoma-check", StringComparison.OrdinalIgnoreCase)).Any();
+
 AnsiConsole.Write(new FigletText("orion").LeftJustified().Color(Color.Green));
 var config = Config.Load();
 if (config is null) {
@@ -43,13 +45,13 @@ try {
     ShellWrapper.BrewPath = config.BrewPath ?? throw new Exception("Brew path is not defined.");
 
     if (config.HasDependencies is null or false) {
-    AnsiConsole.MarkupLine("[yellow]Checking for dependencies...[/]");
-    await ShellWrapper.EnsureZshAvailabilityAsync(cancellationTokenSource.Token);
-    await ShellWrapper.EnsureMacOsSonoma(cancellationTokenSource.Token);
-    await ShellWrapper.EnsureRosettaAvailabilityAsync(cancellationTokenSource.Token);
-    ShellWrapper.EnsureBrewAvailability();
-    await ShellWrapper.EnsureGamePortingToolkitAvailability(cancellationTokenSource.Token);
-    AnsiConsole.MarkupLine("[green]All dependencies are installed.[/]");
+        AnsiConsole.MarkupLine("[yellow]Checking for dependencies...[/]");
+        await ShellWrapper.EnsureZshAvailabilityAsync(cancellationTokenSource.Token);
+        if (!skipSonomaCheck) await ShellWrapper.EnsureMacOsSonoma(cancellationTokenSource.Token);
+        await ShellWrapper.EnsureRosettaAvailabilityAsync(cancellationTokenSource.Token);
+        ShellWrapper.EnsureBrewAvailability();
+        await ShellWrapper.EnsureGamePortingToolkitAvailability(cancellationTokenSource.Token);
+        AnsiConsole.MarkupLine("[green]All dependencies are installed.[/]");
         config.HasDependencies = true;
         // TODO maybe save on set for properties?
         config.Save();
