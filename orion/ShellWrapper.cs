@@ -5,7 +5,7 @@ using Spectre.Console;
 namespace Ptk;
 
 public partial class ShellWrapper {
-    private static readonly string _shellPath = "zsh";
+    private static readonly string _shellPath = "/bin/zsh";
     private static readonly string _architectureFlag = "-x86_64";
     public static readonly string DefaultBrewPath = "/usr/local/bin/brew";
     public static string BrewPath { get; set; } = DefaultBrewPath;
@@ -23,7 +23,7 @@ public partial class ShellWrapper {
 
         using var gptProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName = "/bin/bash",
+                FileName = _shellPath,
                 Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; {hudEnabled}{esyncEnabled} WINEPREFIX=\\\"{winePrefix}\\\" `{BrewPath} --prefix game-porting-toolkit`/bin/wine64 \\\"{executablePath}\\\" {escapedArgs} 2>&1 | grep D3DM'\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
@@ -63,7 +63,7 @@ public partial class ShellWrapper {
     public static async Task EnsureMacOsSonoma(CancellationToken cancellationToken) {
         using var swVersProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName = "/bin/bash",
+                FileName = _shellPath,
                 Arguments = "-c \"sw_vers\"",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
@@ -96,7 +96,7 @@ public partial class ShellWrapper {
         using var zshShell = new Process() {
             StartInfo = new ProcessStartInfo {
                 FileName = "/bin/bash",
-                Arguments = $"-c \"command -v {_shellPath}\"",
+                Arguments = $"-c \"command -v {_shellPath} --verison\"",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
@@ -127,7 +127,7 @@ public partial class ShellWrapper {
     public static async Task EnsureRosettaAvailabilityAsync(CancellationToken cancellationToken) {
         using var machProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName = "/bin/bash",
+                FileName = _shellPath,
                 Arguments = "-c \"sysctl -n machdep.cpu.brand_string\"",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
@@ -140,7 +140,7 @@ public partial class ShellWrapper {
         if (!result.Contains("Apple")) throw new Exception("Intel Based Macs are Ineligible for Rosetta 2.");
         using var rosettaProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName = "/bin/bash",
+                FileName = _shellPath,
                 Arguments = $"-c \"arch {_architectureFlag} /usr/bin/true\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -163,7 +163,7 @@ public partial class ShellWrapper {
     public static async Task EnsureGamePortingToolkitAvailability(CancellationToken cancellationToken) {
         var gptProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName = "/bin/bash",
+                FileName = _shellPath,
                 Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; {BrewPath} list game-porting-toolkit'\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -176,7 +176,68 @@ public partial class ShellWrapper {
         string error = await gptProcess.StandardError.ReadToEndAsync(cancellationToken);
         await gptProcess.WaitForExitAsync(cancellationToken);
         if (!output.Contains("function_grep.pl") || error.Contains("Error: No available formula with the name \"game-porting-toolkit\".")) {
+            AnsiConsole.WriteLine($"[red]Error[/]: {error}");
+            AnsiConsole.WriteLine($"[yellow]Warning[/]: {output}");
             throw new Exception("gameportingtoolkit is not functioning correctly. Ensure that brew is in the environment.");
+        }
+    }
+
+    /// <summary>
+    /// Sets the Windows version for a given wine prefix.
+    /// </summary>
+    /// <param name="winePrefix">The wine prefix to set the Windows version for.</param>
+    /// <param name="windowsVersion">The Windows version to set.</param>
+    /// <exception cref="Exception">Thrown when the Windows version cannot be set.</exception>
+    public static async Task ChangeWinVersion(string winePrefix, string windowsVersion, CancellationToken cancellationToken) {
+        var commands = new string[] {
+            "\\\"HKEY_LOCAL_MACHINE\\\\Software\\\\Microsoft\\\\Windows NT\\\\CurrentVersion\\\" /v CurrentBuild /t REG_SZ /d 19042 /f",
+            "\\\"HKEY_LOCAL_MACHINE\\\\Software\\\\Microsoft\\\\Windows NT\\\\CurrentVersion\\\" /v CurrentBuildNumber /t REG_SZ /d 19042 /f"
+        };
+        foreach (var command in commands) {
+            using var regEdit = new Process() {
+                StartInfo = new ProcessStartInfo {
+                    FileName = _shellPath,
+                    Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; WINEPREFIX=\\\"{winePrefix}\\\" `{BrewPath} --prefix game-porting-toolkit`/bin/wine64 reg add {command}'",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                }
+            };
+            regEdit.Start();
+            var output = await regEdit.StandardOutput.ReadToEndAsync(cancellationToken);
+            await regEdit.WaitForExitAsync(cancellationToken);
+            if (!output.Contains("The operation completed successfully", StringComparison.OrdinalIgnoreCase)) {
+                throw new Exception($"Error changing Windows Version: {output}");
+            }
+        }
+        Utils.KillWine();
+    }
+
+    /// <summary>
+    /// Toggles the Retina mode for a given wine prefix.
+    /// </summary>
+    /// <param name="winePrefix">The wine prefix to toggle Retina mode for.</param>
+    /// <param name="enableRetinaMode">Whether to enable or disable Retina mode.</param>
+    /// <exception cref="Exception">Thrown when Retina mode cannot be toggled.</exception>
+    public static async Task ToggleRetinaMode(string winePrefix, bool enableRetinaMode, CancellationToken cancellationToken) {
+        var value = enableRetinaMode ? 'Y' : 'N';
+        var registryCommand = $"\\\"HKEY_CURRENT_USER\\\\Software\\\\Wine\\\\Mac Driver\\\" /v RetinaMode /t REG_SZ /d '{value}' /f";
+        using var regEdit = new Process() {
+            StartInfo = new ProcessStartInfo {
+                FileName = _shellPath,
+                Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; WINEPREFIX=\\\"{winePrefix}\\\" `{BrewPath} --prefix game-porting-toolkit`/bin/wine64 reg add {registryCommand}'",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            }
+        };
+        regEdit.Start();
+        var output = await regEdit.StandardOutput.ReadToEndAsync(cancellationToken);
+        await regEdit.WaitForExitAsync(cancellationToken);
+        if (!output.Contains("The operation completed successfully", StringComparison.OrdinalIgnoreCase)) {
+            throw new Exception($"Error Retina mode: {output}");
         }
     }
 

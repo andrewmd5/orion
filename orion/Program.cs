@@ -13,6 +13,8 @@ Console.CancelKeyPress += (s, ev) => {
     }
 };
 
+var skipSonomaCheck = args.Where(a => a.Equals("--skip-sonoma-check", StringComparison.OrdinalIgnoreCase)).Any();
+
 AnsiConsole.Write(new FigletText("orion").LeftJustified().Color(Color.Green));
 var config = Config.Load();
 if (config is null) {
@@ -41,13 +43,21 @@ if (config is null) {
 
 try {
     ShellWrapper.BrewPath = config.BrewPath ?? throw new Exception("Brew path is not defined.");
-    AnsiConsole.MarkupLine("[yellow]Checking for dependencies...[/]");
-    await ShellWrapper.EnsureMacOsSonoma(cancellationTokenSource.Token);
-    await ShellWrapper.EnsureZshAvailabilityAsync(cancellationTokenSource.Token);
-    await ShellWrapper.EnsureRosettaAvailabilityAsync(cancellationTokenSource.Token);
-    ShellWrapper.EnsureBrewAvailability();
-    await ShellWrapper.EnsureGamePortingToolkitAvailability(cancellationTokenSource.Token);
-    AnsiConsole.MarkupLine("[green]All dependencies are installed.[/]");
+
+    if (config.HasDependencies is null or false) {
+        AnsiConsole.MarkupLine("[yellow]Checking for dependencies...[/]");
+        await ShellWrapper.EnsureZshAvailabilityAsync(cancellationTokenSource.Token);
+        if (!skipSonomaCheck) await ShellWrapper.EnsureMacOsSonoma(cancellationTokenSource.Token);
+        await ShellWrapper.EnsureRosettaAvailabilityAsync(cancellationTokenSource.Token);
+        ShellWrapper.EnsureBrewAvailability();
+        await ShellWrapper.EnsureGamePortingToolkitAvailability(cancellationTokenSource.Token);
+
+        await ShellWrapper.ChangeWinVersion(config.WinePrefix ?? throw new Exception("Wine prefix is not defined."), "19042", cancellationTokenSource.Token);
+        AnsiConsole.MarkupLine("[green]All dependencies are installed.[/]");
+        config.HasDependencies = true;
+        // TODO maybe save on set for properties?
+        config.Save();
+    }
     AnsiConsole.MarkupLine("[yellow]Checking for updates...[/]");
     var latestVersion = await Utils.GetLatestReleaseAsync(cancellationTokenSource.Token);
     if (latestVersion is null) {
@@ -84,7 +94,7 @@ try {
     if (steam.IsInstalled()) {
         config.Apps = config.Apps.Prepend(new App(
             "Steam", string.Empty, steam.ExecutablePath,
-            "-nofriendsui",
+            "-nofriendsui -noverifyfiles -udpforce -allosarches",
             string.Empty,
             AppPlatform.Steam)
         ).ToList();
@@ -100,6 +110,11 @@ try {
 
     var enableHud = AnsiConsole.Confirm("Enable HUD?", defaultValue: true);
     var enableEsync = AnsiConsole.Confirm("Enable esync?", defaultValue: false);
+    var enableRetinaMode = AnsiConsole.Confirm("Enable Retina (high resolution) mode?", defaultValue: false);
+    if (enableRetinaMode) {
+        AnsiConsole.MarkupLine("[yellow]Enabling Retina mode. Please note, some games will not run with Retina mode enabled.[/]");
+    }
+    await ShellWrapper.ToggleRetinaMode(config.WinePrefix, enableRetinaMode, cancellationTokenSource.Token);
 
     var app = AnsiConsole.Prompt(
             new SelectionPrompt<App>()
