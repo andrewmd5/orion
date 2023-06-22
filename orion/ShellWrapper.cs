@@ -5,7 +5,7 @@ using Spectre.Console;
 namespace Ptk;
 
 public partial class ShellWrapper {
-    private static readonly string _shellPath = "zsh";
+    private static readonly string _shellPath = "/bin/zsh";
     private static readonly string _architectureFlag = "-x86_64";
     public static readonly string DefaultBrewPath = "/usr/local/bin/brew";
     public static string BrewPath { get; set; } = DefaultBrewPath;
@@ -23,7 +23,7 @@ public partial class ShellWrapper {
 
         using var gptProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName = "/bin/bash",
+                FileName = _shellPath,
                 Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; {hudEnabled}{esyncEnabled} WINEPREFIX=\\\"{winePrefix}\\\" `{BrewPath} --prefix game-porting-toolkit`/bin/wine64 \\\"{executablePath}\\\" {escapedArgs} 2>&1 | grep D3DM'\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
@@ -63,7 +63,7 @@ public partial class ShellWrapper {
     public static async Task EnsureMacOsSonoma(CancellationToken cancellationToken) {
         using var swVersProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName = "/bin/bash",
+                FileName = _shellPath,
                 Arguments = "-c \"sw_vers\"",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
@@ -127,7 +127,7 @@ public partial class ShellWrapper {
     public static async Task EnsureRosettaAvailabilityAsync(CancellationToken cancellationToken) {
         using var machProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName = "/bin/bash",
+                FileName =  _shellPath,
                 Arguments = "-c \"sysctl -n machdep.cpu.brand_string\"",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
@@ -140,7 +140,7 @@ public partial class ShellWrapper {
         if (!result.Contains("Apple")) throw new Exception("Intel Based Macs are Ineligible for Rosetta 2.");
         using var rosettaProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName = "/bin/bash",
+                FileName =  _shellPath,
                 Arguments = $"-c \"arch {_architectureFlag} /usr/bin/true\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -163,7 +163,7 @@ public partial class ShellWrapper {
     public static async Task EnsureGamePortingToolkitAvailability(CancellationToken cancellationToken) {
         var gptProcess = new Process() {
             StartInfo = new ProcessStartInfo {
-                FileName = "/bin/bash",
+                FileName =  _shellPath,
                 Arguments = $"-c \"arch {_architectureFlag} {_shellPath} -c 'eval \\\"$({BrewPath} shellenv)\\\"; {BrewPath} list game-porting-toolkit'\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -176,6 +176,8 @@ public partial class ShellWrapper {
         string error = await gptProcess.StandardError.ReadToEndAsync(cancellationToken);
         await gptProcess.WaitForExitAsync(cancellationToken);
         if (!output.Contains("function_grep.pl") || error.Contains("Error: No available formula with the name \"game-porting-toolkit\".")) {
+            AnsiConsole.WriteLine($"[red]Error[/]: {error}");
+            AnsiConsole.WriteLine($"[yellow]Warning[/]: {output}");
             throw new Exception("gameportingtoolkit is not functioning correctly. Ensure that brew is in the environment.");
         }
     }

@@ -42,8 +42,8 @@ if (config is null) {
 try {
     ShellWrapper.BrewPath = config.BrewPath ?? throw new Exception("Brew path is not defined.");
     AnsiConsole.MarkupLine("[yellow]Checking for dependencies...[/]");
-    await ShellWrapper.EnsureMacOsSonoma(cancellationTokenSource.Token);
     await ShellWrapper.EnsureZshAvailabilityAsync(cancellationTokenSource.Token);
+    await ShellWrapper.EnsureMacOsSonoma(cancellationTokenSource.Token);
     await ShellWrapper.EnsureRosettaAvailabilityAsync(cancellationTokenSource.Token);
     ShellWrapper.EnsureBrewAvailability();
     await ShellWrapper.EnsureGamePortingToolkitAvailability(cancellationTokenSource.Token);
