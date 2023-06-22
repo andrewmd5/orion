@@ -96,7 +96,7 @@ public partial class ShellWrapper {
         using var zshShell = new Process() {
             StartInfo = new ProcessStartInfo {
                 FileName = "/bin/bash",
-                Arguments = $"-c \"command -v {_shellPath}\"",
+                Arguments = $"-c \"command -v {_shellPath} --verison\"",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
